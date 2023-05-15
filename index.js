@@ -13,7 +13,10 @@ const viewTable = (name, key) => {
     sql.query('SELECT * FROM `'+name+'`', (err, res) => {
         if (err) throw err;
         
-        if (returnArray) return res.map(row => row['key'])
+        if (key){
+            const out = res.map(row => row[key])
+            showOutput(out)
+        } 
         // Show the response
         const departments = res.map(row => new Department(row.id, row.name));
         showOutput(departments);
@@ -48,7 +51,7 @@ const addRole = () => {
     sql.query('SELECT * FROM `departments`', (err, res) => {
         if (err) throw err;
 
-        let roles = res.map(department => ({
+        const department = res.map(department => ({
             value: department.id,
             name: department.name
         }));
@@ -68,7 +71,7 @@ const addRole = () => {
                 name: 'department',
                 type: 'list',
                 message: 'What department does this role belong to?',
-                choices: roles,
+                choices: department,
             }
         ]).then((answers) => {
             sql.query(
@@ -77,6 +80,64 @@ const addRole = () => {
                 (err, res) => {
                     if (err) throw err;
                     console.log(`Added ${answers.name} to the database`);
+                    // Go back to the main menu
+                    menu();
+                }
+            );
+        });
+    });
+};
+
+const addEmployee = () => {
+    let roles = []
+    let managers = [];
+    sql.query('SELECT * FROM `roles`', (err, res) => {
+        if (err) throw err;
+
+        roles = res.map(role => ({
+            value: role.id,
+            name: role.title
+        }));
+    })
+    sql.query('SELECT * FROM `employees`', (err, res) => {
+        if (err) throw err;
+
+        managers = res.map(manager => ({
+            value: manager.id,
+            name: `${manager.first_name} ${manager.last_name}`,
+        }));
+
+        inquirer.prompt([
+            {
+                name: 'first_name',
+                type: 'text',
+                message: 'What is the employee\'s first name?',
+            },
+            {
+                name: 'last_name',
+                type: 'text',
+                message: 'What is the employee\'s last name?',
+            },
+            {
+                name: 'role',
+                type: 'list',
+                message: 'What is the employee\'s  role?',
+                choices: roles,
+            },
+            {
+                name: 'manager',
+                type: 'list',
+                message: 'Who is the employee\'s manager?',
+                choices: managers,
+            },
+            
+        ]).then((answers) => {
+            sql.query(
+                'INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)',
+                [answers.first_name, answers.last_name, answers.role, answers.manager],
+                (err, res) => {
+                    if (err) throw err;
+                    console.log(`Added ${answers.first_name} ${answers.last_name} to the database`);
                     // Go back to the main menu
                     menu();
                 }
@@ -109,10 +170,10 @@ const menu = () => {
                     viewTable('departments');
                     break;
                 case 'View all roles':
-                    viewTable('roles');
+                    viewTable('roles', 'title');
                     break;
                 case 'View all employees':
-                    viewTable('employees');
+                    viewTable('employees', 'first_name');
                     break;
                 case 'Add a department':
                     addDepartment();
@@ -121,7 +182,7 @@ const menu = () => {
                     addRole();
                     break;
                 case 'Add an employee':
-                    addRow("employee");
+                    addEmployee("employee");
                     break;
                 case 'Update an employee role':
                     updateRow("employee");
