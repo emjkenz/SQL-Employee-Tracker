@@ -1,0 +1,29 @@
+{
+  "name": "sql-employee-tracker",
+  "version": "1.0.0",
+  "description": "A Nodejs tool to view employees in a database",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emjkenz/SQL-Employee-Tracker.git"
+  },
+  "keywords": [
+    "nodejs",
+    "js",
+    "sql"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/emjkenz/SQL-Employee-Tracker/issues"
+  },
+  "homepage": "https://github.com/emjkenz/SQL-Employee-Tracker#readme",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "inquirer": "^8.2.5",
+    "mysql2": "^3.3.1"
+  }
+}
