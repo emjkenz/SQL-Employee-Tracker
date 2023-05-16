@@ -23,6 +23,7 @@
   "homepage": "https://github.com/emjkenz/SQL-Employee-Tracker#readme",
   "dependencies": {
     "dotenv": "^16.0.3",
+    "figlet": "^1.6.0",
     "inquirer": "^8.2.5",
     "mysql2": "^3.3.1"
   }
