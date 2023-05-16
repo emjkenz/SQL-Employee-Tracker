@@ -28,3 +28,19 @@ THEN I am prompted to enter the employee’s first name, last name, role, and ma
 WHEN I choose to update an employee role
 THEN I am prompted to select an employee to update and their new role and this information is updated in the database
 ```
+
+## Installation
+
+1) Clone the github repository
+2) Use `npm i` to install the packages required
+3) Optional: seed the database using `node seed.js`
+
+## Usage
+
+To use the Employee Tracker run `node index.js` to start the program
+
+See example video on how to use it: [Video](https://drive.google.com/file/d/1WGjdQanWYRcWI2hBtUaQ9lN3b_p6r5RB/view)
+
+## Licence
+
+This is licened under the MIT licence
