@@ -1,204 +1,85 @@
 const sql = require('./helpers/sql');
 const inquirer = require('inquirer');
-const {Department} = require('./classes/tables')
 
-const showOutput = (array) => {
-    // Remove the index in console.table
-    // https://stackoverflow.com/questions/49618069/remove-index-from-console-table
-    const transformed = array.reduce((arr, { id, ...x }) => { arr[id] = x; return arr }, {})
-    console.table(transformed)
-}
+// Database classes
+const Departments = require('./classes/departments')
+const Employees = require('./classes/employees')
+const Roles = require('./classes/roles')
 
-const viewTable = (name, key) => {
-    sql.query('SELECT * FROM `'+name+'`', (err, res) => {
-        if (err) throw err;
-        
-        if (key){
-            const out = res.map(row => row[key])
-            showOutput(out)
-        } 
-        // Show the response
-        const departments = res.map(row => new Department(row.id, row.name));
-        showOutput(departments);
-        
-        // Go back to the main menu
-        menu();
-    });
-}
+// ASCII art
+const figlet = require('figlet');
+let logo = "";
 
-const updateRow = (table, values) => {
-    console.log(table);
-}
+figlet.text("Employee\nTracker", {
+    font: "Big",
+}, (err, data) => {
+    if (err) { console.dir(err); return }
+    logo = data;
+});
 
-const addDepartment = () => {
-    inquirer.prompt({
-        name: 'department',
-        type: 'text',
-        message: 'What is the name of the department?',
-    }).then( answer => {
-        sql.query('INSERT INTO departments (name) VALUES(?)', [answer.department], (err, res) => {
-            if (err) throw err;
-
-            console.log(`Added ${answer.department} to the database`);
-
-            // Go back to the main menu
-            menu();
-        })
-    })
-}
-
-const addRole = () => {
-    sql.query('SELECT * FROM `departments`', (err, res) => {
-        if (err) throw err;
-
-        const department = res.map(department => ({
-            value: department.id,
-            name: department.name
-        }));
-
-        inquirer.prompt([
-            {
-                name: 'name',
-                type: 'text',
-                message: 'What is the name of the role?',
-            },
-            {
-                name: 'salary',
-                type: 'number',
-                message: 'What is the salary for this role?',
-            },
-            {
-                name: 'department',
-                type: 'list',
-                message: 'What department does this role belong to?',
-                choices: department,
-            }
-        ]).then((answers) => {
-            sql.query(
-                'INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?)',
-                [answers.name, answers.salary, answers.department],
-                (err, res) => {
-                    if (err) throw err;
-                    console.log(`Added ${answers.name} to the database`);
-                    // Go back to the main menu
-                    menu();
-                }
-            );
-        });
-    });
-};
-
-const addEmployee = () => {
-    let roles = []
-    let managers = [];
-    sql.query('SELECT * FROM `roles`', (err, res) => {
-        if (err) throw err;
-
-        roles = res.map(role => ({
-            value: role.id,
-            name: role.title
-        }));
-    })
-    sql.query('SELECT * FROM `employees`', (err, res) => {
-        if (err) throw err;
-
-        managers = res.map(manager => ({
-            value: manager.id,
-            name: `${manager.first_name} ${manager.last_name}`,
-        }));
-
-        inquirer.prompt([
-            {
-                name: 'first_name',
-                type: 'text',
-                message: 'What is the employee\'s first name?',
-            },
-            {
-                name: 'last_name',
-                type: 'text',
-                message: 'What is the employee\'s last name?',
-            },
-            {
-                name: 'role',
-                type: 'list',
-                message: 'What is the employee\'s  role?',
-                choices: roles,
-            },
-            {
-                name: 'manager',
-                type: 'list',
-                message: 'Who is the employee\'s manager?',
-                choices: managers,
-            },
-            
-        ]).then((answers) => {
-            sql.query(
-                'INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)',
-                [answers.first_name, answers.last_name, answers.role, answers.manager],
-                (err, res) => {
-                    if (err) throw err;
-                    console.log(`Added ${answers.first_name} ${answers.last_name} to the database`);
-                    // Go back to the main menu
-                    menu();
-                }
-            );
-        });
-    });
-};
-
-
+// Menu for the user to select what they want to do
 const menu = () => {
-    inquirer
-        .prompt({
-            name: 'action',
-            type: 'list',
-            message: 'What would you like to do?',
-            choices: [
-                'View all departments',
-                'View all roles',
-                'View all employees',
-                'Add a department',
-                'Add a role',
-                'Add an employee',
-                'Update an employee role',
-                'Exit',
-            ],
-        })
-        .then( answer => {
-            switch (answer.action) {
-                case 'View all departments':
-                    viewTable('departments');
-                    break;
-                case 'View all roles':
-                    viewTable('roles', 'title');
-                    break;
-                case 'View all employees':
-                    viewTable('employees', 'first_name');
-                    break;
-                case 'Add a department':
-                    addDepartment();
-                    break;
-                case 'Add a role':
-                    addRole();
-                    break;
-                case 'Add an employee':
-                    addEmployee("employee");
-                    break;
-                case 'Update an employee role':
-                    updateRow("employee");
-                    break;
-                case 'Exit':
-                    sql.end();
-                    break;
-            }
+
+    // Prompt the user for what they want to do
+    inquirer.prompt({
+        name: 'action',
+        type: 'list',
+        message: 'What would you like to do?',
+        choices: [
+            'View all departments',
+            'View all roles',
+            'View all employees',
+            'Add a department',
+            'Add a role',
+            'Add an employee',
+            'Update an employee role',
+            'Exit',
+        ],
+    })
+    .then(answer => {
+        // Create the classes for each table
+        const department = new Departments(sql, menu);
+        const role = new Roles(sql, menu);
+        const employee = new Employees(sql, menu);
+
+        // Switch statement to determine what to do based on the user's answer
+        switch (answer.action) {
+            case 'View all departments':
+                department.viewAll();
+                break;
+            case 'View all roles':
+                role.viewAll();
+                break;
+            case 'View all employees':
+                employee.viewAll();
+                break;
+            case 'Add a department':
+                department.add();
+                break;
+            case 'Add a role':
+                role.add();
+                break;
+            case 'Add an employee':
+                employee.add();
+                break;
+            case 'Update an employee role':
+                employee.update();
+                break;
+            case 'Exit':
+                sql.end();
+                break;
         }
-    );
-}
+    });
+};
 
 // Connect to the MySQL database
 sql.connect((err) => {
+    // Throw an error if there is one connecting to the database
     if (err) throw err;
 
-    // Run the inquirer menu
+    // Show the logo and start the menu
+    console.log(logo);
+
+    // Start the menu
     menu();
 });
