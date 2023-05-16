@@ -28,6 +28,6 @@ CREATE TABLE employees (
   last_name VARCHAR(255) NOT NULL,
   role_id INT NOT NULL,
   manager_id INT,
-  FOREIGN KEY (id) REFERENCES roles(id),
+  FOREIGN KEY (role_id ) REFERENCES roles(id),
   FOREIGN KEY (manager_id) REFERENCES employees(id)
 );
